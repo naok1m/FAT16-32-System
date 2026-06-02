@@ -678,43 +678,56 @@ def _print_chain_for(fs: "MiniFAT", path: str) -> None:
     print(f"   {path}: cadeia {arrow}  ({len(chain)} cluster(s))")
 
 
-def run_frag_demo() -> int:
+def run_frag_demo(interactive: bool = False) -> int:
+    def step_pause(msg: str = "Pressione ENTER para o proximo passo...") -> None:
+        if interactive:
+            try:
+                input(f"\n>>> {msg}")
+                print()
+            except EOFError:
+                pass
+
     print("=== DEMO DE FRAGMENTACAO (ALOCACAO ENCADEADA) ===")
     print()
     print("Volume FAT16 com 10 clusters de 4 bytes.")
     print("Vamos forcar uma cadeia com 'buracos' para mostrar que")
     print("o arquivo NAO precisa ficar em clusters contiguos.")
-    print()
+    step_pause("Pressione ENTER para comecar o PASSO 1...")
 
     fs = MiniFAT.create("FAT16", total_clusters=10, cluster_size=4)
 
     print("PASSO 1: criar 3 arquivos pequenos em sequencia.")
-    fs.write_file("/a.txt", "AAAA")        # 1 cluster
-    fs.write_file("/b.txt", "BBBBBBBB")    # 2 clusters
-    fs.write_file("/c.txt", "CCCC")        # 1 cluster
+    print("   /a.txt = 4 bytes  -> 1 cluster")
+    print("   /b.txt = 8 bytes  -> 2 clusters")
+    print("   /c.txt = 4 bytes  -> 1 cluster")
+    fs.write_file("/a.txt", "AAAA")
+    fs.write_file("/b.txt", "BBBBBBBB")
+    fs.write_file("/c.txt", "CCCC")
     _print_fat_snapshot(fs, "FAT depois das 3 escritas")
     _print_chain_for(fs, "/a.txt")
     _print_chain_for(fs, "/b.txt")
     _print_chain_for(fs, "/c.txt")
-    print()
+    step_pause("Pressione ENTER para o PASSO 2 (apagar /b.txt)...")
 
     print("PASSO 2: apagar /b.txt -> libera clusters no MEIO da area.")
     fs.remove("/b.txt")
     _print_fat_snapshot(fs, "FAT depois de apagar /b.txt")
     print("   Clusters do meio agora aparecem como FREE.")
-    print()
+    print("   Repare: cluster 2 (a.txt) e cluster 5 (c.txt) seguem ocupados.")
+    step_pause("Pressione ENTER para o PASSO 3 (gravar /grande.txt)...")
 
     print("PASSO 3: gravar /grande.txt ocupando 4 clusters.")
-    print("   Alocador pega os FREE em ordem: primeiro os do meio,")
-    print("   depois os do final. Resultado: cadeia FRAGMENTADA.")
-    fs.write_file("/grande.txt", "1111222233334444")  # 16 bytes -> 4 clusters
+    print("   Alocador pega os FREE em ordem: primeiro os do meio (3, 4),")
+    print("   depois os do final (6, 7). Resultado: cadeia FRAGMENTADA.")
+    fs.write_file("/grande.txt", "1111222233334444")
     _print_fat_snapshot(fs, "FAT depois de gravar /grande.txt")
     _print_chain_for(fs, "/grande.txt")
-    print()
+    print("   Observe o salto: 4 -> 6 (pula o cluster 5, que e do c.txt).")
+    step_pause("Pressione ENTER para o PASSO 4 (ler /grande.txt)...")
 
     print("PASSO 4: ler /grande.txt seguindo a cadeia.")
     print("   Conteudo:", fs.read_file("/grande.txt"))
-    print("   Mesmo espalhado, FAT reconstroi a ordem correta.")
+    print("   Mesmo espalhado, a FAT reconstroi a ordem correta.")
     print()
 
     fs.save("demo_frag.json")
@@ -933,7 +946,7 @@ def run_interactive_menu(image_path: str) -> int:
 
             elif choice == "15":
                 print()
-                run_frag_demo()
+                run_frag_demo(interactive=True)
                 print()
                 print("A demo usou uma imagem separada (demo_frag.json).")
                 print(f"Sua imagem atual ({image_path}) continua intacta.")
