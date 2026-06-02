@@ -1,0 +1,12 @@
+outputs/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.idea/
+.vscode/
+demo_fat16.json
+demo_fat32.json
+demo_frag.json
+meu_disco.json
