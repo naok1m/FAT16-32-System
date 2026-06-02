@@ -765,7 +765,6 @@ def create_image_interactively(image_path: str) -> MiniFAT:
     print("Limites desta simulacao:")
     print(f"- FAT16: ate {FAT16_MAX_CLUSTERS} clusters")
     print(f"- FAT32: ate {FAT32_PRACTICAL_MAX_CLUSTERS} clusters")
-    print("Para apresentar, 12, 16 ou 128 clusters ja e suficiente.")
     print()
 
     while True:
